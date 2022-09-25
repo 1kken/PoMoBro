@@ -17,30 +17,49 @@ struct Handler;
 #[async_trait]
 impl EventHandler for Handler {
     async fn message(&self, ctx: Context, msg: Message) {
-        let five_secs = Duration::new(5, 0);
+        let active_session = Duration::new(10, 0);
+        let rest_session = Duration::new(5, 0);
         if msg.content == "!start" {
+            let mut session: u8 = 0;
             let start_response = MessageBuilder::new()
                 .push(&msg.author)
-                .push(" test times starts now")
+                .push("active session starts..")
+                .build();
+            let rest_response = MessageBuilder::new()
+                .push(&msg.author)
+                .push(" Active session ends time to rest..")
                 .build();
             let end_response = MessageBuilder::new()
                 .push(&msg.author)
-                .push(" 5 secs passed timer done")
+                .push(" End Session!")
                 .build();
-            if let Err(why) = msg.reply_ping(&ctx.http, &start_response).await {
-                println!("Error sending message: {:?}", why);
-            }
-            sleep(five_secs).await;
-            if let Err(_) = msg.reply_ping(&ctx.http, &end_response).await {
-                println!("Error");
-            }
+            //A basic and traditional pomodoro contains 4 iterations of the methods eg.. active-rest 1 | active-rest 2 | active-rest 3 | active-rest 4
+            while session != 4 {
+                if let Err(why) = msg.reply_ping(&ctx.http, &start_response).await {
+                    println!("Error sending message: {:?}", why);
+                }
+                //timer for the current active/pomodoro session
+                sleep(active_session).await;
+                //timer for the rest_session
+                if let Err(_) = msg.reply_ping(&ctx.http, &rest_response).await {
+                    println!("Error");
+                }
+                sleep(rest_session).await;
+                session += 1;
+                //end session
+                if session == 4 {
+                    if let Err(_) = msg.reply_ping(&ctx.http, &end_response).await {
+                        println!("Error");
+                    }
+                }
+            } //while loop end
         } //msg start
 
         if msg.content == "!stats" {
             if let Err(_) = msg.reply_ping(&ctx.http, "Under development").await {
                 println!("Error");
             }
-        }
+        } //msg stats
     }
 
     // Set a handler to be called on the `ready` event. This is called when a
