@@ -5,39 +5,41 @@ use serenity::prelude::*;
 use serenity::utils::MessageBuilder;
 use std::env;
 
-//timer imports
+/*timer imports
 use std::thread;
-use std::time::Duration;
+use std::time::Duration;*/
+
+//async timer imports
+use tokio::time::{sleep, Duration};
 
 struct Handler;
 
 #[async_trait]
 impl EventHandler for Handler {
-    // Set a handler for the `message` event - so that whenever a new message
-    // is received - the closure (or function) passed will be called.
-    //
-    // Event handlers are dispatched through a threadpool, and so multiple
-    // events can be dispatched simultaneously.
     async fn message(&self, ctx: Context, msg: Message) {
-        let mut user = &msg.author;
-        let start_response = MessageBuilder::new()
-            .push(&user)
-            .push("30 minutes of study times starts now")
-            .build();
-        let end_response = MessageBuilder::new()
-            .push(&user)
-            .push("5 secs passed timer done")
-            .build();
         let five_secs = Duration::new(5, 0);
         if msg.content == "!start" {
-            user = &msg.author;
-            if let Err(why) = msg.channel_id.say(&ctx.http, &start_response).await {
+            let start_response = MessageBuilder::new()
+                .push(&msg.author)
+                .push(" test times starts now")
+                .build();
+            let end_response = MessageBuilder::new()
+                .push(&msg.author)
+                .push(" 5 secs passed timer done")
+                .build();
+            if let Err(why) = msg.reply_ping(&ctx.http, &start_response).await {
                 println!("Error sending message: {:?}", why);
             }
-            thread::sleep(five_secs);
-            if let Err(why) = msg.channel_id.say(&ctx.http, &end_response).await {
-                println!("Error sending message: {:?}", why);
-            };
+            sleep(five_secs).await;
+            if let Err(_) = msg.reply_ping(&ctx.http, &end_response).await {
+                println!("Error");
+            }
+        } //msg start
+
+        if msg.content == "!stats" {
+            if let Err(_) = msg.reply_ping(&ctx.http, "Under development").await {
+                println!("Error");
+            }
         }
     }
 
