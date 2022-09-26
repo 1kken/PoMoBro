@@ -7,7 +7,7 @@ the "Pomodoro" method\
 **!start focus time | rest time | long rest time | number of sessions**\
 **eg..**\
 **!start 30 5 60 4**\
-*where*\
+*where* 
 - 30 is focus minutes/learning time\
 - 5 is rest/break minutes\
 - 60 is the long rest/break minutes\
