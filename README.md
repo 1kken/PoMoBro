@@ -17,7 +17,7 @@ the "Pomodoro" method\
 although PoMohomoBro is nice he can be strict specially on its duty\
 **PoMoHomobro says-** 
 *"Pomodoro is made for us to have a focused learning time, pausing and doing something or even an emergency will break the
-very concept of the POMODORO method"*\
+very concept of the POMODORO method"*
 
 #Tasklist for devs
  - [x] build bare bones 
