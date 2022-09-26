@@ -31,7 +31,7 @@ impl EventHandler for Handler {
                     - 4 is the number of rounds/session\n",
                 )
                 .build();
-            let user_input = msg.content.strip_prefix("!start"); // remove start
+            let user_input = msg.content.trim().strip_prefix("!start "); // remove start
             let input_info: Vec<&str>;
             match user_input {
                 Some(input) => {
@@ -79,7 +79,7 @@ impl EventHandler for Handler {
                         sleep(rest_session).await;
                         session += 1;
                         //end session
-                        if session == 4 {
+                        if session == number_sessions {
                             if let Err(_) = msg.reply_ping(&ctx.http, &long_rest_response).await {
                                 println!("Error");
                             }
