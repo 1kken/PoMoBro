@@ -7,15 +7,15 @@ the "Pomodoro" method\
 **!start focus time | rest time | long rest time | number of sessions**\
 **eg..**\
 **!start 30 5 60 4**\
-#where#\
+*where*\
 - 30 is focus minutes/learning time\
 - 5 is rest/break minutes\
 - 60 is the long rest/break minutes\
 - 4 is the number of rounds/session\
 
 **Why no Pause option?**\
-**althoughPoMohomoBro is nice he can be strict specially on its duty ** \
-**PoMoHomobro says-**\  
+**althoughPoMohomoBro is nice he can be strict specially on its duty**\
+**PoMoHomobro says-** \  
 *"Pomodoro is made for us to have a focused learning time pausing and doing something or even an emergemcy will break the\
 very concept of the POMODORO method"*\
 
