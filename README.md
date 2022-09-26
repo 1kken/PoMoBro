@@ -22,5 +22,6 @@ very concept of the POMODORO method"*
 #Tasklist for devs
  - [x] build bare bones 
  - [x] dynamic input
- - [] run time error handling
+ - [x] run time error handling
+ - [] make the message more presentable
  - [] impliment stop
