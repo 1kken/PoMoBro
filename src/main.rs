@@ -4,13 +4,34 @@ use serenity::model::gateway::Ready;
 use serenity::prelude::*;
 use serenity::utils::MessageBuilder;
 use std::env;
-
-/*timer imports
-use std::thread;
-use std::time::Duration;*/
-
 //async timer imports
 use tokio::time::{sleep, Duration};
+//toDo make a struct for the pomodoro session then  make a function that accepts the struct
+struct PomodoroDetails {
+    focus_time: u32,
+    rest_time: u32,
+    long_rest_time: u32,
+    number_sessions: u32,
+}
+//set the vectors value to respected value to build dynamic active[0]|rest[1]|long[2]|session[3]
+impl PomodoroDetails {
+    fn new(raw_data: Vec<&str>) -> Result<PomodoroDetails, ()> {
+        let mut processed_data: Vec<u32> = Vec::new();
+        for i in raw_data.iter() {
+            if let Ok(data) = i.parse() {
+                processed_data.push(data);
+            } else {
+                return Err(());
+            }
+        } //end loop
+        Ok(PomodoroDetails {
+            focus_time: processed_data[0],
+            rest_time: processed_data[1],
+            long_rest_time: processed_data[2],
+            number_sessions: processed_data[3],
+        })
+    }
+}
 
 struct Handler;
 
@@ -35,75 +56,76 @@ impl EventHandler for Handler {
             let input_info: Vec<&str>;
             match user_input {
                 Some(input) => {
+                    //log inputs
                     println!("{}", input);
                     input_info = input.trim().split(' ').collect();
-                    //set the vectors value to respected value to build dynamic active[0]|rest[1]|long[2]|session[3]
-                    let focus_time: u32 = input_info[0].parse().unwrap();
-                    let rest_time: u32 = input_info[1].parse().unwrap();
-                    let long_rest_time: u32 = input_info[2].parse().unwrap();
-                    let number_sessions: u32 = input_info[3].parse().unwrap();
-                    let active_session = Duration::new((focus_time * 60) as u64, 0);
-                    let rest_session = Duration::new((rest_time * 60) as u64, 0);
-                    let long_rest_session = Duration::new((long_rest_time * 60) as u64, 0);
-                    //main process
-                    let mut session: u32 = 0;
-                    let start_response = MessageBuilder::new()
-                        .push(&msg.author)
-                        .push("active session starts..")
-                        .build();
-                    let rest_response = MessageBuilder::new()
-                        .push(&msg.author)
-                        .push(" Active session ends time to rest..")
-                        .build();
-                    let long_rest_response = MessageBuilder::new()
-                        .push(&msg.author)
-                        .push(" Session finished long rest..")
-                        .build();
-                    let end_response = MessageBuilder::new()
-                        .push(&msg.author)
-                        .push(" End Session!")
-                        .build();
+                    if let Ok(data) = PomodoroDetails::new(input_info) {
+                        let active_session = Duration::new((data.focus_time * 60) as u64, 0);
+                        let rest_session = Duration::new((data.rest_time * 60) as u64, 0);
+                        let long_rest_session = Duration::new((data.long_rest_time * 60) as u64, 0);
+                        //message builder
+                        let mut session: u32 = 0;
+                        let start_response = MessageBuilder::new()
+                            .push(&msg.author)
+                            .push("active session starts..")
+                            .build();
+                        let rest_response = MessageBuilder::new()
+                            .push(&msg.author)
+                            .push(" Active session ends time to rest..")
+                            .build();
+                        let long_rest_response = MessageBuilder::new()
+                            .push(&msg.author)
+                            .push(" Session finished long rest..")
+                            .build();
+                        let end_response = MessageBuilder::new()
+                            .push(&msg.author)
+                            .push(" End Session!")
+                            .build();
 
-                    //pomodoro main process
-                    //A basic and traditional pomodoro contains 4 iterations of the methods eg.. active-rest 1 | active-rest 2 | active-rest 3 | active-rest 4
-                    while session != number_sessions {
-                        if let Err(why) = msg.reply_ping(&ctx.http, &start_response).await {
-                            println!("Error sending message: {:?}", why);
-                        }
-                        //timer for the current active/pomodoro session
-                        sleep(active_session).await;
-                        //timer for the rest_session
-                        if let Err(_) = msg.reply_ping(&ctx.http, &rest_response).await {
-                            println!("Error");
-                        }
-                        sleep(rest_session).await;
-                        session += 1;
-                        //end session
-                        if session == number_sessions {
-                            if let Err(_) = msg.reply_ping(&ctx.http, &long_rest_response).await {
+                        //pomodoro main process
+                        while session != data.number_sessions {
+                            if let Err(why) = msg.reply_ping(&ctx.http, &start_response).await {
+                                println!("Error sending message: {:?}", why);
+                            }
+                            //timer for the current active/pomodoro session
+                            sleep(active_session).await;
+                            //timer for the rest_session
+                            if let Err(_) = msg.reply_ping(&ctx.http, &rest_response).await {
                                 println!("Error");
                             }
-                            sleep(long_rest_session).await;
-                            if let Err(_) = msg.reply_ping(&ctx.http, &end_response).await {
-                                println!("Error");
+                            sleep(rest_session).await;
+                            session += 1;
+                            //end session
+                            if session == data.number_sessions {
+                                if let Err(_) = msg.reply_ping(&ctx.http, &long_rest_response).await
+                                {
+                                    println!("Error");
+                                }
+                                sleep(long_rest_session).await;
+                                if let Err(_) = msg.reply_ping(&ctx.http, &end_response).await {
+                                    println!("Error");
+                                }
                             }
+                        } //while loop end
+                    } else {
+                        if let Err(_) = msg.reply_mention(&ctx.http, "Invalid input").await {
+                            println!("User input is wrong");
                         }
-                    } //while loop end
+                    }
                 }
                 None => {
                     if let Err(e) = msg.reply_mention(&ctx.http, &show_guide).await {
                         println!("An error has occured log:{}", e);
                     }
-                }
-            }
-        }
+                } //end none
+            } //end match
+        } //msg !start
         if msg.content == "!stats" {
             if let Err(_) = msg.reply_ping(&ctx.http, "Under development").await {
                 println!("Error");
             }
         } //msg stats
     }
-
     // Set a handler to be called on the `ready` event. This is called when a
     // shard is booted, and a READY payload is sent by Discord. This payload
     // contains data like the current user's guild Ids, current user data,
