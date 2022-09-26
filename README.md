@@ -1,6 +1,6 @@
 # PoMoHomoBro
 A discord bot that helps you study using
-the "Pomodoro" method\\
+the "Pomodoro" method\
 -Dont fear PoMoHomoBro is here-\
 #How to use\
 **time measurement is in minutes**\
