@@ -7,7 +7,7 @@ the "Pomodoro" method\
 **eg..**\
 **time measurement is in minutes**\
 **!start 30 5 60 4\
-###where##\
+###where###\
 - 30 is focus minutes/learning time\
 - 5 is rest/break minutes\
 - 60 is the long rest/break minutes\
