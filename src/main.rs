@@ -4,6 +4,9 @@ use serenity::model::gateway::Ready;
 use serenity::prelude::*;
 use serenity::utils::MessageBuilder;
 use std::env;
+//import for the stop implementation
+use serenity::model::user::User;
+use std::collections::HashMap;
 //async timer imports
 use tokio::time::{sleep, Duration};
 //toDo make a struct for the pomodoro session then  make a function that accepts the struct
@@ -33,11 +36,24 @@ impl PomodoroDetails {
     }
 }
 
+// function to check if the user still exist
+fn user_exist(hash: &HashMap<&User, ()>, user: &User) -> bool {
+    if let Some(_) = hash.get(user) {
+        true
+    } else {
+        false
+    }
+}
+
+//a stop function
+
 struct Handler;
 
 #[async_trait]
 impl EventHandler for Handler {
     async fn message(&self, ctx: Context, msg: Message) {
+        //declaring vector use for the stop method
+        let mut user_que: HashMap<&User, ()> = HashMap::new();
         if msg.content.starts_with("!start") {
             let show_guide = MessageBuilder::new()
                 .push_bold(
@@ -56,6 +72,9 @@ impl EventHandler for Handler {
             let input_info: Vec<&str>;
             match user_input {
                 Some(input) => {
+                    //insert the user to the hashmap
+                    println!("{:?}", msg.author);
+                    user_que.insert(&msg.author, ());
                     //log inputs
                     println!("{}", input);
                     input_info = input.trim().split(' ').collect();
@@ -89,21 +108,33 @@ impl EventHandler for Handler {
                             }
                             //timer for the current active/pomodoro session
                             sleep(active_session).await;
-                            //timer for the rest_session
-                            if let Err(_) = msg.reply_ping(&ctx.http, &rest_response).await {
-                                println!("Error");
+                            if user_exist(&user_que, &msg.author) {
+                                //timer for the rest_session
+                                if let Err(_) = msg.reply_ping(&ctx.http, &rest_response).await {
+                                    println!("Error");
+                                }
+                                if user_exist(&user_que, &msg.author) {
+                                    sleep(rest_session).await;
+                                    session += 1;
+                                } else {
+                                    println!("i was stopped");
+                                    break;
+                                }
+                            } else {
+                                break;
                             }
-                            sleep(rest_session).await;
-                            session += 1;
-                            //end session
                             if session == data.number_sessions {
                                 if let Err(_) = msg.reply_ping(&ctx.http, &long_rest_response).await
                                 {
                                     println!("Error");
                                 }
                                 sleep(long_rest_session).await;
-                                if let Err(_) = msg.reply_ping(&ctx.http, &end_response).await {
-                                    println!("Error");
+                                if user_exist(&user_que, &msg.author) {
+                                    if let Err(_) = msg.reply_ping(&ctx.http, &end_response).await {
+                                        println!("Error");
+                                    }
+                                } else {
+                                    break;
                                 }
                             }
                         } //while loop end
@@ -120,6 +151,16 @@ impl EventHandler for Handler {
                 } //end none
             } //end match
         } //msg !start
+        if msg.content == "!stop" {
+            println!("{:?}", msg.author);
+            user_que.remove(&msg.author);
+            if let Err(_) = msg
+                .reply_ping(&ctx.http, "POMODORO STOPPED YOU BITCH")
+                .await
+            {
+                println!("error on 'stop'");
+            }
+        }
         if msg.content == "!stats" {
             if let Err(_) = msg.reply_ping(&ctx.http, "Under development").await {
                 println!("Error");
