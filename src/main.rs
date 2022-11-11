@@ -1,22 +1,36 @@
 mod utils;
-use std::env;
-use utils::{msg,parsing};
 use serenity::async_trait;
 use serenity::model::channel::Message;
 use serenity::model::gateway::Ready;
 use serenity::prelude::*;
+use std::env;
+use utils::{msg, parsing};
 
 struct Handler;
+use utils::msg::MessageType::{Help,Start,Rest,Stop};
 
 #[async_trait]
 impl EventHandler for Handler {
     //this method let you do some epic things
     async fn message(&self, ctx: Context, msg: Message) {
-        if parsing::inp_parser(&msg,"!start") {
-            if let Err(why) = msg.channel_id.say(&ctx.http, msg::message_builder(&msg)).await {
+        if parsing::inp_parser(&msg, "!start") {
+            if let Err(why) = msg
+                .reply_ping(&ctx, msg::message_builder(&msg, Start))
+                .await
+            {
                 println!("Error sending message: {:?}", why);
             }
         }
+
+        if parsing::inp_parser(&msg, "!help") {
+            if let Err(why) = msg
+                .reply_ping(&ctx, msg::message_builder(&msg, Help))
+                .await
+            {
+                println!("Error sending message: {:?}", why);
+            }
+        }
+
     }
 
     async fn ready(&self, _: Context, ready: Ready) {
@@ -36,8 +50,10 @@ async fn main() {
     // Create a new instance of the Client, logging in as a bot. This will
     // automatically prepend your bot token with "Bot ", which is a requirement
     // by Discord for bot users.
-    let mut client =
-        Client::builder(&token, intents).event_handler(Handler).await.expect("Err creating client");
+    let mut client = Client::builder(&token, intents)
+        .event_handler(Handler)
+        .await
+        .expect("Err creating client");
 
     // Finally, start a single shard, and start listening to events.
     //
@@ -47,3 +63,4 @@ async fn main() {
         println!("Client error: {:?}", why);
     }
 }
+
