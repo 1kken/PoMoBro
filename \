@@ -1,0 +1,8 @@
+use serenity::model::Message;
+mod  msg{
+
+}
+
+mod parsing{
+    pub fn inp_parser()
+}

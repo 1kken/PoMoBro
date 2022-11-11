@@ -1,7 +1,6 @@
-mod msg;
-mod parsing;
+mod utils;
 use std::env;
-
+use utils::{msg,parsing};
 use serenity::async_trait;
 use serenity::model::channel::Message;
 use serenity::model::gateway::Ready;
