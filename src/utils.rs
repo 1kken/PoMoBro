@@ -1,6 +1,7 @@
 use serenity::model::channel::Message;
 use serenity::prelude::*;
 use serenity::utils::MessageBuilder;
+
 pub struct Data<'a> {
     active: usize,
     rest: usize,
@@ -45,7 +46,7 @@ pub mod parsing {
 pub mod client_handler {
     use super::parsing::data_parser;
     use super::*;
-    use crate::msg::MessageType::{Help, Rest, Start, Stop};
+    use crate::msg::MessageType::{Help, LngRest, Rest, Start, Stop,Done};
     use tokio::sync::mpsc::{self, Receiver, Sender};
     use tokio::time::{sleep, Duration};
     // use std::collections::HashMap;
@@ -70,50 +71,58 @@ pub mod client_handler {
                 sleep(Duration::from_secs(det.long_rest as u64)).await;
                 ctr -= 1;
             }
+            tx.send("!done").await.unwrap();
         });
-        let message = det.msg;
-        let ctx = det.ctx;
         while let Some(i) = rx.recv().await {
-            match i {
-                "!start" => {
-                    if let Err(why) = &message
-                        .reply_ping(&ctx, "Focus now!")
-                        .await
-                    {
-                        println!("Error sending message: {:?}", why);
-                    };
-                }
-                "!rest" => {
-                    if let Err(why) = &message
-                        .reply_ping(&ctx, msg::message_builder(&message, Rest))
-                        .await
-                    {
-                        println!("Error sending message: {:?}", why);
-                    };
-                }
-                "!long_rest" => {
-                    if let Err(why) = &message
-                        .reply_ping(&ctx, msg::message_builder(&message, Rest))
-                        .await
-                    {
-                        println!("Error sending message: {:?}", why);
-                    };
-                }
-                _ => {
-                    if let Err(why) = &message
-                        .reply_ping(&ctx, msg::message_builder(&message, Help))
-                        .await
-                    {
-                        println!("Error sending message: {:?}", why);
-                    };
-                }
-            }
+            notify_client(i, &det).await;
         }
     }
 
     // fn stop_timer(){}
 
-    // fn notify_client(){}
+    async fn notify_client<'a>(to_send: &str, det: &Data<'a>) {
+        let message = det.msg;
+        let ctx = det.ctx;
+        match to_send {
+            "!start" => {
+                if let Err(why) = &message.reply_ping(&ctx, "Focus now!").await {
+                    println!("Error sending message: {:?}", why);
+                };
+            }
+            "!rest" => {
+                if let Err(why) = &message
+                    .reply_ping(&ctx, msg::message_builder(&message, Rest))
+                    .await
+                {
+                    println!("Error sending message: {:?}", why);
+                };
+            }
+            "!long_rest" => {
+                if let Err(why) = &message
+                    .reply_ping(&ctx, msg::message_builder(&message, LngRest))
+                    .await
+                {
+                    println!("error sending message: {:?}", why);
+                };
+            }
+            "!done" => {
+                if let Err(why) = &message
+                    .reply_ping(&ctx, msg::message_builder(&message, Done))
+                    .await
+                {
+                    println!("error sending message: {:?}", why);
+                };
+            }
+            _ => {
+                if let Err(why) = &message
+                    .reply_ping(&ctx, msg::message_builder(&message, Help))
+                    .await
+                {
+                    println!("Error sending message: {:?}", why);
+                };
+            }
+        }
+    }
 }
 
 pub mod msg {
@@ -125,9 +134,11 @@ pub mod msg {
         Start,
         Rest,
         Stop,
+        LngRest,
+        Done,
     }
     use MessageType::{Help, Rest, Start, Stop};
-    pub fn message_builder(msg: &Message, msg_type: MessageType) -> String {
+    pub fn message_builder(_msg: &Message, msg_type: MessageType) -> String {
         let mut response = String::new();
         let now = Local::now();
         let time = format!("{}:{}", now.hour(), now.minute());
@@ -167,6 +178,14 @@ pub mod msg {
                     .push_bold("Pomodoro stopped @")
                     .push(" ")
                     .push_bold(time)
+                    .build();
+            }
+            LngRest => {
+                response = MessageBuilder::new().push_bold("Long rest").build();
+            }
+            Done => {
+                response = MessageBuilder::new()
+                    .push_bold("Congrats your DONE!")
                     .build();
             }
         }

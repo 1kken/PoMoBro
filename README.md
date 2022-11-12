@@ -23,7 +23,7 @@ very concept of the POMODORO method"*
  - [x] build bare bones 
  - [x] make the message more presentable
  - [x] dynamic input
- - [] work on multithreading
+ - [x] work on multithreading
  - [] shared data "concurrently"
- - [] run time error handling
  - [] impliment stop
+ - [] run time error handling

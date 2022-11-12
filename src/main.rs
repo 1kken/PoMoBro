@@ -30,10 +30,6 @@ impl EventHandler for Handler {
                 if let Err(why) = msg.reply_ping(&ctx, msg::message_builder(&msg, Stop)).await {
                     println!("Error sending message: {:?}", why);
                 }
-            }else {
-                if let Err(why) = msg.reply_ping(&ctx, msg::message_builder(&msg, Help)).await {
-                    println!("Error sending message: {:?}", why);
-                }
             }
         }
     }
