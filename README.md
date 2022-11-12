@@ -22,6 +22,8 @@ very concept of the POMODORO method"*
 #Tasklist for devs
  - [x] build bare bones 
  - [x] make the message more presentable
- - [] dynamic input
+ - [x] dynamic input
+ - [] work on multithreading
+ - [] shared data "concurrently"
  - [] run time error handling
  - [] impliment stop
