@@ -46,29 +46,55 @@ pub mod parsing {
 pub mod client_handler {
     use super::parsing::data_parser;
     use super::*;
-    use crate::msg::MessageType::{Help, LngRest, Rest, Start, Stop,Done};
     use tokio::sync::mpsc::{self, Receiver, Sender};
     use tokio::time::{sleep, Duration};
-    // use std::collections::HashMap;
-    // use std::sync::{Mutex,Arc};
-    // use serenity::model::user::User;
-    //we need to have a hashmap that can handle concurrency which means Arc<Mutex<T>>>
+    //import for the ferson
+    use serenity::model::user::User;
+    use std::collections::HashMap;
+    use std::sync::Mutex;
+    //we need lazy static for shared data
+    lazy_static! {
+        static ref USER_POOL: Mutex<HashMap<User,&'static str>> = Mutex::new(HashMap::new());
+    }
+    //why theres function in here well idk but std::Mutex can be use in async functions
+    fn add_usr(usr: User){ 
+        let mut user_pool = USER_POOL.lock().unwrap();
+        user_pool.insert(usr, "test");
+    }
+
+    fn contains(usr: &User) -> bool {
+        let user_pool = USER_POOL.lock().unwrap();
+        if user_pool.contains_key(usr) {
+            true
+        } else {
+            false
+        }
+    }
+
+    pub fn stop_client(msg: &Message){
+        let mut user_pool = USER_POOL.lock().unwrap();
+        user_pool.remove(&msg.author); 
+    }
 
     pub async fn main_handler(ctx: Context, message: &Message) {
         add_client(data_parser(&ctx, &message)).await;
     }
 
+
     async fn add_client<'a>(det: Data<'a>) {
         let (tx, mut rx): (Sender<&str>, Receiver<&str>) = mpsc::channel(100);
+        add_usr(det.msg.author.clone()); 
         tokio::spawn(async move {
             let mut ctr = det.session;
-            while ctr > 0 {
+            while ctr > 0{
                 tx.send("!start").await.unwrap();
-                sleep(Duration::from_secs(det.active as u64)).await;
+                sleep(Duration::from_secs(det.active as u64 * 60)).await;
+
                 tx.send("!rest").await.unwrap();
-                sleep(Duration::from_secs(det.rest as u64)).await;
+                sleep(Duration::from_secs(det.rest as u64 * 60)).await;
+
                 tx.send("!long_rest").await.unwrap();
-                sleep(Duration::from_secs(det.long_rest as u64)).await;
+                sleep(Duration::from_secs(det.long_rest as u64 * 60)).await;
                 ctr -= 1;
             }
             tx.send("!done").await.unwrap();
@@ -78,18 +104,19 @@ pub mod client_handler {
         }
     }
 
-    // fn stop_timer(){}
 
+    use crate::msg::MessageType::{Done,LngRest,Rest};
     async fn notify_client<'a>(to_send: &str, det: &Data<'a>) {
         let message = det.msg;
-        let ctx = det.ctx;
+        let ctx = det.ctx; 
+        let active = contains(&det.msg.author);
         match to_send {
-            "!start" => {
-                if let Err(why) = &message.reply_ping(&ctx, "Focus now!").await {
+            "!start" if active => {
+                if let Err(why) = &message.reply_ping(&ctx, "**Focus Now**").await {
                     println!("Error sending message: {:?}", why);
                 };
             }
-            "!rest" => {
+            "!rest" if active  => {
                 if let Err(why) = &message
                     .reply_ping(&ctx, msg::message_builder(&message, Rest))
                     .await
@@ -97,7 +124,7 @@ pub mod client_handler {
                     println!("Error sending message: {:?}", why);
                 };
             }
-            "!long_rest" => {
+            "!long_rest" if active  => {
                 if let Err(why) = &message
                     .reply_ping(&ctx, msg::message_builder(&message, LngRest))
                     .await
@@ -105,22 +132,16 @@ pub mod client_handler {
                     println!("error sending message: {:?}", why);
                 };
             }
-            "!done" => {
-                if let Err(why) = &message
-                    .reply_ping(&ctx, msg::message_builder(&message, Done))
-                    .await
-                {
-                    println!("error sending message: {:?}", why);
-                };
+            "!done" if active  => {
+                   stop_client(&message); 
+                    if let Err(why) = &message
+                        .reply_ping(&ctx, msg::message_builder(&message, Done))
+                        .await
+                    {
+                        println!("error sending message: {:?}", why);
+                    }
             }
-            _ => {
-                if let Err(why) = &message
-                    .reply_ping(&ctx, msg::message_builder(&message, Help))
-                    .await
-                {
-                    println!("Error sending message: {:?}", why);
-                };
-            }
+            _  => { }
         }
     }
 }
@@ -137,14 +158,14 @@ pub mod msg {
         LngRest,
         Done,
     }
-    use MessageType::{Help, Rest, Start, Stop};
+
+    use MessageType::{Done, Help, LngRest, Rest, Start, Stop};
     pub fn message_builder(_msg: &Message, msg_type: MessageType) -> String {
-        let mut response = String::new();
         let now = Local::now();
         let time = format!("{}:{}", now.hour(), now.minute());
         match msg_type {
             Help => {
-                response = MessageBuilder::new()
+                MessageBuilder::new()
                     .push_bold_line("How to use")
                     .push_bold_line("Time measurement is in minutes")
                     .push_mono_line(
@@ -157,38 +178,37 @@ pub mod msg {
                     .push_italic_line(
                         "-60 is the long rest/break minutes- 4 is the number of rounds/session",
                     )
-                    .build();
+                    .build()
             }
             Start => {
-                response = MessageBuilder::new()
+                MessageBuilder::new()
                     .push_bold("Pomodoro started @ ")
                     .push(" ")
                     .push_bold(time)
-                    .build();
+                    .build()
             }
             Rest => {
-                response = MessageBuilder::new()
+                 MessageBuilder::new()
                     .push_bold("Pomodoro rest @ ")
                     .push(" ")
                     .push_bold(time)
-                    .build();
+                    .build()
             }
             Stop => {
-                response = MessageBuilder::new()
+                MessageBuilder::new()
                     .push_bold("Pomodoro stopped @")
                     .push(" ")
                     .push_bold(time)
-                    .build();
+                    .build()
             }
             LngRest => {
-                response = MessageBuilder::new().push_bold("Long rest").build();
+                MessageBuilder::new().push_bold("Long rest").build()
             }
             Done => {
-                response = MessageBuilder::new()
+                MessageBuilder::new()
                     .push_bold("Congrats your DONE!")
-                    .build();
+                    .build()
             }
         }
-        response
     }
 }

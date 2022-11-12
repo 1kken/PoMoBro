@@ -5,9 +5,10 @@ use serenity::model::gateway::Ready;
 use serenity::prelude::*;
 use std::env;
 use utils::{client_handler, msg, parsing};
-
+use utils::msg::MessageType::{Help,Start, Stop};
+#[macro_use]
+extern crate lazy_static;
 struct Handler;
-use utils::msg::MessageType::{Help, Rest, Start, Stop};
 
 #[async_trait]
 impl EventHandler for Handler {
@@ -30,6 +31,7 @@ impl EventHandler for Handler {
                 if let Err(why) = msg.reply_ping(&ctx, msg::message_builder(&msg, Stop)).await {
                     println!("Error sending message: {:?}", why);
                 }
+                client_handler::stop_client(&msg);
             }
         }
     }

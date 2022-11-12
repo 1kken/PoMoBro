@@ -24,6 +24,7 @@ very concept of the POMODORO method"*
  - [x] make the message more presentable
  - [x] dynamic input
  - [x] work on multithreading
- - [] shared data "concurrently"
- - [] impliment stop
+ - [x] shared data "concurrently"
+ - [x] impliment stop
+ - [] refactoring
  - [] run time error handling
