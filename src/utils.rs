@@ -1,10 +1,13 @@
 use serenity::model::channel::Message;
+use serenity::prelude::*;
 use serenity::utils::MessageBuilder;
-pub struct data {
+pub struct Data<'a> {
     active: usize,
     rest: usize,
     long_rest: usize,
     session: usize,
+    ctx: &'a Context,
+    msg: &'a Message,
 }
 
 pub mod parsing {
@@ -22,17 +25,19 @@ pub mod parsing {
         }
     }
 
-    pub fn data_parser(msg: &Message) -> data {
+    pub fn data_parser<'a>(ctx: &'a Context, msg: &'a Message) -> Data<'a> {
         let data: Vec<String> = msg
             .content
             .split(" ")
             .map(|data| data.to_string())
             .collect();
-        data {
+        Data {
             active: data[1].parse::<usize>().unwrap(),
             rest: data[2].parse::<usize>().unwrap(),
             long_rest: data[3].parse::<usize>().unwrap(),
             session: data[4].parse::<usize>().unwrap(),
+            ctx,
+            msg,
         }
     }
 }
@@ -40,32 +45,70 @@ pub mod parsing {
 pub mod client_handler {
     use super::parsing::data_parser;
     use super::*;
-    use std::thread;
-    use std::time::Duration;
+    use crate::msg::MessageType::{Help, Rest, Start, Stop};
+    use tokio::sync::mpsc::{self, Receiver, Sender};
+    use tokio::time::{sleep, Duration};
     // use std::collections::HashMap;
     // use std::sync::{Mutex,Arc};
     // use serenity::model::user::User;
     //we need to have a hashmap that can handle concurrency which means Arc<Mutex<T>>>
-    pub fn main_handler(msg: &Message) {
-        add_client(data_parser(msg));
+
+    pub async fn main_handler(ctx: Context, message: &Message) {
+        add_client(data_parser(&ctx, &message)).await;
     }
 
-    fn add_client(det: data) {
-        thread::spawn(move || {
-            let mut session = det.session as u32;
-            while session > 0 {
-                //active session
-                println!("Started");
-                thread::sleep(Duration::from_secs(det.active as u64));
-                //rest session
-                thread::sleep(Duration::from_secs(det.rest as u64));
-                println!("Rest");
-                //long rest session
-                thread::sleep(Duration::from_secs(det.long_rest as u64));
-                println!("Long rest");
-                session -= 1;
+    async fn add_client<'a>(det: Data<'a>) {
+        let (tx, mut rx): (Sender<&str>, Receiver<&str>) = mpsc::channel(100);
+        tokio::spawn(async move {
+            let mut ctr = det.session;
+            while ctr > 0 {
+                tx.send("!start").await.unwrap();
+                sleep(Duration::from_secs(det.active as u64)).await;
+                tx.send("!rest").await.unwrap();
+                sleep(Duration::from_secs(det.rest as u64)).await;
+                tx.send("!long_rest").await.unwrap();
+                sleep(Duration::from_secs(det.long_rest as u64)).await;
+                ctr -= 1;
             }
         });
+        let message = det.msg;
+        let ctx = det.ctx;
+        while let Some(i) = rx.recv().await {
+            match i {
+                "!start" => {
+                    if let Err(why) = &message
+                        .reply_ping(&ctx, "Focus now!")
+                        .await
+                    {
+                        println!("Error sending message: {:?}", why);
+                    };
+                }
+                "!rest" => {
+                    if let Err(why) = &message
+                        .reply_ping(&ctx, msg::message_builder(&message, Rest))
+                        .await
+                    {
+                        println!("Error sending message: {:?}", why);
+                    };
+                }
+                "!long_rest" => {
+                    if let Err(why) = &message
+                        .reply_ping(&ctx, msg::message_builder(&message, Rest))
+                        .await
+                    {
+                        println!("Error sending message: {:?}", why);
+                    };
+                }
+                _ => {
+                    if let Err(why) = &message
+                        .reply_ping(&ctx, msg::message_builder(&message, Help))
+                        .await
+                    {
+                        println!("Error sending message: {:?}", why);
+                    };
+                }
+            }
+        }
     }
 
     // fn stop_timer(){}

@@ -25,7 +25,7 @@ impl EventHandler for Handler {
                 {
                     println!("Error sending message: {:?}", why);
                 }
-                client_handler::main_handler(&msg);
+                client_handler::main_handler(ctx,&msg).await;
             } else if parsing::inp_parser(&msg,"!stop"){
                 if let Err(why) = msg.reply_ping(&ctx, msg::message_builder(&msg, Stop)).await {
                     println!("Error sending message: {:?}", why);
