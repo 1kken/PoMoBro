@@ -1,30 +1,52 @@
-# PoMoHomoBro
-A discord bot that helps you study using
-the "Pomodoro" method\
--Dont fear PoMoHomoBro is here-\
-#How to use\
-**time measurement is in minutes**\
-**!start focus time | rest time | long rest time | number of sessions**\
-**eg..**\
-**!start 30 5 60 4**\
-*where* 
-- 30 is focus minutes/learning time\
-- 5 is rest/break minutes\
-- 60 is the long rest/break minutes\
-- 4 is the number of rounds/session\
+# 🍅 PoMoHomoBro
 
-**Why no Pause option?**\
-although PoMohomoBro is nice he can be strict specially on its duty\
-**PoMoHomobro says-** 
-*"Pomodoro is made for us to have a focused learning time, pausing and doing something or even an emergency will break the
-very concept of the POMODORO method"*
+**PoMoHomoBro** is a Discord bot that helps you study using the **Pomodoro technique** — a time management method designed to boost focus and productivity by alternating work and break sessions.
 
-#Tasklist for devs
- - [x] build bare bones 
- - [x] make the message more presentable
- - [x] dynamic input
- - [x] work on multithreading
- - [x] shared data "concurrently"
- - [x] impliment stop
- - [] refactoring
- - [] run time error handling
+> *Don't fear — PoMoHomoBro is here!*
+
+---
+
+## 🧠 How to Use
+
+**Time is measured in minutes**
+
+Command:
+
+
+**Explanation:**
+- `30` → Focus time (learning session)
+- `5` → Short break (between sessions)
+- `60` → Long break (after all sessions)
+- `4` → Number of sessions (Pomodoros)
+
+---
+
+## ❓ Why No Pause Option?
+
+Although PoMoHomoBro is friendly, he's *strict* when it comes to focus.  
+PoMoHomoBro says:
+
+> “Pomodoro is meant to train your attention span. Pausing mid-session — even for emergencies — goes against its purpose. Stay disciplined!”
+
+---
+
+## 🛠️ Developer Task List
+
+- [x] Build barebones bot
+- [x] Improve message formatting
+- [x] Handle dynamic input
+- [x] Implement multithreading
+- [x] Share data concurrently
+- [x] Add stop functionality
+- [ ] Refactor code
+- [ ] Add runtime error handling
+
+---
+
+## 📌 Notes
+
+- This bot was made for focused, no-distraction study sessions.
+- Designed with love, sarcasm, and the desire to help people stop doomscrolling.
+
+---
+
